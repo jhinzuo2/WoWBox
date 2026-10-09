@@ -265,6 +265,14 @@
     <string name="enable_box86_64_logs">Enable Box86/Box64 logs</string>
     <string name="enable_alsa_debug">Enable ALSA debug logs</string>
     <string name="enable_dxvk_log">Enable DXVK log</string>
+    <string name="gpu_driver">GPU driver</string>
+    <string name="gpu_driver_status_auto_xclipse">Samsung Xclipse detected: RADV will be used. %1$s</string>
+    <string name="gpu_driver_status_auto_other">No Xclipse GPU detected: Turnip will be used.</string>
+    <string name="gpu_driver_status_turnip">Turnip will be used.</string>
+    <string name="gpu_driver_status_radv">RADV Xclipse will be used. %1$s</string>
+    <string name="gpu_driver_radv_installed">Driver installed.</string>
+    <string name="gpu_driver_radv_missing">Driver is downloaded on the next session start (internet needed once).</string>
+    <string name="gpu_driver_radv_unsupported">RADV needs Android 14 or newer, Turnip will be used.</string>
     <string name="enable_wrapper_log">Enable wrapper log</string>
     <string name="wrapper_log_level">Wrapper log level</string>
     <string name="export">Export</string>

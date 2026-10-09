@@ -28,6 +28,7 @@ import androidx.preference.PreferenceManager;
 import com.google.android.material.navigation.NavigationView;
 import com.winlator.box.BoxRuntime;
 import com.winlator.box.FrameGenerationManager;
+import com.winlator.box.GpuDriverSelector;
 import com.winlator.box.LosslessDllValidator;
 import com.winlator.box.WineDebugConfig;
 import com.winlator.contentdialog.ContentDialog;
@@ -55,6 +56,8 @@ public class SettingsFragment extends Fragment {
     private String wineDebugProfile;
     private String lastEnabledWineDebugProfile;
     private boolean syncingWineDebugUi;
+    private Spinner sGpuDriver;
+    private TextView tvGpuDriverStatus;
     private FrameGenerationManager frameGenerationManager;
     private CheckBox cbFrameGenerationEnabled;
     private CheckBox cbFrameGenerationPerformanceMode;
@@ -99,6 +102,7 @@ public class SettingsFragment extends Fragment {
 
         setupWineDebugUi(view);
         setupFrameGenerationUi(view);
+        setupGpuDriverUi(view);
 
         final CheckBox cbEnableAlsaDebug = view.findViewById(R.id.CBEnableAlsaDebug);
         cbEnableAlsaDebug.setChecked(preferences.getBoolean("enable_alsa_debug", false));
@@ -147,6 +151,7 @@ public class SettingsFragment extends Fragment {
 
             SharedPreferences.Editor editor = preferences.edit();
             editor.putBoolean("use_dri3", cbUseDRI3.isChecked());
+            GpuDriverSelector.setChoice(editor, gpuDriverChoiceFromPosition(sGpuDriver.getSelectedItemPosition()));
             editor.putBoolean("ime_overlay_keyboard", cbImeOverlayKeyboard.isChecked());
             editor.putBoolean(BoxRuntime.PREF_OPEN_LINKS_IN_ANDROID_BROWSER,
                     cbOpenLinksInAndroidBrowser.isChecked());
@@ -216,6 +221,63 @@ public class SettingsFragment extends Fragment {
                         Toast.LENGTH_LONG).show();
             });
         });
+    }
+
+    private static String gpuDriverChoiceFromPosition(int position) {
+        switch (position) {
+            case 1: return GpuDriverSelector.CHOICE_TURNIP;
+            case 2: return GpuDriverSelector.CHOICE_RADV;
+            default: return GpuDriverSelector.CHOICE_AUTO;
+        }
+    }
+
+    private static int gpuDriverPositionFromChoice(String choice) {
+        if (GpuDriverSelector.CHOICE_TURNIP.equals(choice)) return 1;
+        if (GpuDriverSelector.CHOICE_RADV.equals(choice)) return 2;
+        return 0;
+    }
+
+    private void setupGpuDriverUi(View view) {
+        final Context context = requireContext();
+        sGpuDriver = view.findViewById(R.id.SGpuDriver);
+        tvGpuDriverStatus = view.findViewById(R.id.TVGpuDriverStatus);
+        sGpuDriver.setSelection(gpuDriverPositionFromChoice(GpuDriverSelector.getChoice(context)));
+        sGpuDriver.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View v, int position, long id) {
+                refreshGpuDriverStatus(gpuDriverChoiceFromPosition(position));
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {}
+        });
+        refreshGpuDriverStatus(GpuDriverSelector.getChoice(context));
+    }
+
+    private void refreshGpuDriverStatus(String choice) {
+        final Context context = getContext();
+        if (context == null || tvGpuDriverStatus == null) return;
+        String installState = getString(GpuDriverSelector.isRadvInstalled(context)
+                ? R.string.gpu_driver_radv_installed
+                : R.string.gpu_driver_radv_missing);
+        String text;
+        if (GpuDriverSelector.CHOICE_RADV.equals(choice)) {
+            text = GpuDriverSelector.isRadvSupportedByOs()
+                    ? getString(R.string.gpu_driver_status_radv, installState)
+                    : getString(R.string.gpu_driver_radv_unsupported);
+        }
+        else if (GpuDriverSelector.CHOICE_TURNIP.equals(choice)) {
+            text = getString(R.string.gpu_driver_status_turnip);
+        }
+        else if (GpuDriverSelector.isXclipse(context)) {
+            text = GpuDriverSelector.isRadvSupportedByOs()
+                    ? getString(R.string.gpu_driver_status_auto_xclipse, installState)
+                    : getString(R.string.gpu_driver_radv_unsupported);
+        }
+        else {
+            text = getString(R.string.gpu_driver_status_auto_other);
+        }
+        tvGpuDriverStatus.setText(text);
     }
 
     private void setupFrameGenerationUi(View view) {

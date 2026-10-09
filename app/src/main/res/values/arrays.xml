@@ -15,6 +15,11 @@
         <item>1600x900 (16:9)</item>
         <item>1920x1080 (16:9)</item>
     </string-array>
+    <string-array name="gpu_driver_choice_entries">
+        <item>Auto (detect GPU)</item>
+        <item>Turnip (Adreno)</item>
+        <item>RADV (Samsung Xclipse)</item>
+    </string-array>
     <string-array name="graphics_driver_entries">
         <item>Wrapper (Adrenotools)</item>
         <item>VirGL (Universal)</item>

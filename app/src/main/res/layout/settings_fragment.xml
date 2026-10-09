@@ -89,6 +89,32 @@
                 android:layout_height="wrap_content">
 
                 <LinearLayout style="@style/FieldSet">
+                    <Spinner
+                        android:id="@+id/SGpuDriver"
+                        style="@style/ComboBox"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:entries="@array/gpu_driver_choice_entries" />
+
+                    <TextView
+                        android:id="@+id/TVGpuDriverStatus"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:textSize="12sp" />
+                </LinearLayout>
+
+                <TextView
+                    style="@style/FieldSetLabel"
+                    android:text="@string/gpu_driver" />
+            </FrameLayout>
+
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <LinearLayout style="@style/FieldSet">
                     <CheckBox
                         android:id="@+id/CBFrameGenerationEnabled"
                         android:layout_width="wrap_content"

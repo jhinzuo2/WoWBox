@@ -46,6 +46,7 @@ import com.winlator.box.BoxSessionForegroundService;
 import com.winlator.box.BoxSessionManager;
 import com.winlator.box.BoxSessionResumeGate;
 import com.winlator.box.FrameGenerationManager;
+import com.winlator.box.GpuDriverSelector;
 import com.winlator.box.WineDebugConfig;
 import com.winlator.container.Container;
 import com.winlator.container.ContainerManager;
@@ -1826,9 +1827,14 @@ import java.util.concurrent.Executors;
 
             ParsedConfig cfg = ParsedConfig.parseSemicolonList(graphicsDriverConfig);
 
-            // Adrenotools driver bundle version (e.g. "turnip26.0.0").
+            // Samsung Xclipse: download/install the RADV bundle on first use (blocking, we are on the
+            // setup thread). On failure this silently keeps the Turnip bundle.
+            final boolean radvActive = GpuDriverSelector.prepare(this);
+
+            // Adrenotools driver bundle version (e.g. "turnip26.0.0", or the RADV Xclipse bundle).
             if (!envVars.has("ADRENOTOOLS_DRIVER_PATH") && !envVars.has("ADRENOTOOLS_DRIVER_NAME")) {
-                String driverId = cfg.get("version", "turnip" + DefaultVersion.ADRENOTOOLS_TURNIP);
+                String driverId = GpuDriverSelector.resolveDriverId(this,
+                        cfg.get("version", "turnip" + DefaultVersion.ADRENOTOOLS_TURNIP));
                 new AdrenotoolsManager(this).setDriverById(envVars, imageFs, driverId);
             }
 
@@ -1880,11 +1886,14 @@ import java.util.concurrent.Executors;
             }
 
             // Turnip stability: prefer system memory path (Ludashi default is noconform,sysmem).
-            String tuDebug = envVars.get("TU_DEBUG");
-            if (tuDebug == null) tuDebug = "";
-            if (tuDebug.isEmpty()) tuDebug = "noconform";
-            if (!tuDebug.contains("sysmem")) tuDebug = tuDebug + ",sysmem";
-            envVars.put("TU_DEBUG", tuDebug);
+            // Not applicable to RADV.
+            if (!radvActive) {
+                String tuDebug = envVars.get("TU_DEBUG");
+                if (tuDebug == null) tuDebug = "";
+                if (tuDebug.isEmpty()) tuDebug = "noconform";
+                if (!tuDebug.contains("sysmem")) tuDebug = tuDebug + ",sysmem";
+                envVars.put("TU_DEBUG", tuDebug);
+            }
 
             boolean useDRI3 = preferences.getBoolean("use_dri3", true);
             if (!useDRI3) {
@@ -1947,7 +1956,8 @@ import java.util.concurrent.Executors;
         if ("wrapper".equals(graphicsDriver)) {
             ParsedConfig cfg = ParsedConfig.parseSemicolonList(graphicsDriverConfig);
             String version = cfg.get("version", "");
-            driverLabel = version.toLowerCase().contains("turnip") ? "TURNIP" : "WRAPPER";
+            if (GpuDriverSelector.isRadvActive(this)) driverLabel = "RADV";
+            else driverLabel = version.toLowerCase().contains("turnip") ? "TURNIP" : "WRAPPER";
         }
         else if ("virgl".equals(graphicsDriver)) {
             driverLabel = "VIRGL";

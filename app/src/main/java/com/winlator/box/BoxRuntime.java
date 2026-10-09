@@ -1717,7 +1717,8 @@ public class BoxRuntime {
     }
 
     public String getGpuDriverId() {
-        return resolveDriverIdFromSpec(getSpec());
+        // Turnip from the box spec by default; RADV Xclipse when selected/detected and installed.
+        return GpuDriverSelector.resolveDriverId(context, resolveDriverIdFromSpec(getSpec()));
     }
 
     private String resolveDriverIdFromSpec(BoxSpec spec) {
